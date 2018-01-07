@@ -23,7 +23,7 @@ options(scipen = 999)
 
 # Black People
 
-**Total Black Population in USA is 429.759.60 (2016)**
+**Total Black Population in the USA is 429.759.60 (2016)**
 
 ```{r, echo=FALSE, warning=F,message=FALSE}
 crimestats_black <- crimestats %>% 
@@ -100,7 +100,7 @@ plot_dat2 <- plot_dat %>%
 ```
 
 # White People
-**Total White Population in USA is 248.485.057 (2016)**
+**Total White Population in the USA is 248.485.057 (2016)**
 
 ```{r, echo=FALSE}
 crimestats_white <- crimestats %>% 
