@@ -1,0 +1,179 @@
+---
+title: "Crime Rates by Race"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+---
+
+
+Treemaps based on [FBI Crime Data 2016](https://ucr.fbi.gov/crime-in-the-u.s/2016/crime-in-the-u.s.-2016/topic-pages/tables/table-21) and [United States Census Bureau Data 2016](https://www.census.gov/quickfacts/fact/table/US/AGE135216)
+
+
+```{r, echo=FALSE, warning=F,message=FALSE}
+pacman::p_load(tidyverse, haven, magrittr, highcharter)
+```
+
+```{r, echo=FALSE, warning=F,message=FALSE}
+crimestats <- readxl::read_excel("table-21a.xls")
+
+options(scipen = 999)
+```
+
+# Black People
+
+**Total Black Population in USA is 429.759.60 (2016)**
+
+```{r, echo=FALSE, warning=F,message=FALSE}
+crimestats_black <- crimestats %>% 
+  mutate(offenders = `Black or
+African
+American`) %>% 
+  mutate(offense = `Offense charged`) %>% 
+  mutate(totalblack = 42975960) %>% 
+  mutate(perc_black = offenders / totalblack) %>% 
+  mutate(nonoffenders = 42975960 - offenders) %>% 
+  select(offense, offenders, totalblack, perc_black, nonoffenders)
+
+```
+
+Assuming each arrest is one unique person (highly unlikely, some individuals get arrested more often) $5.27\%$ (*2.263.112* individuals) of the black population were arrested for some offense. If we only take violent crime[^1] into account $0.35\%$ (*153.341* individuals) of the black population were arrested for violent offenses.
+
+
+```{r, echo=FALSE}
+`%notin%` <- Negate(`%in%`)
+
+viol_crime <- c("Murder and nonnegligent manslaughter", "Rape3", "Robbery", "Aggravated assault")
+
+prop_crime <- c("Burglary", "Larceny-theft", "Motor vehicle theft", 
+"Arson")
+
+plot_dat <- crimestats_black %>% 
+  filter(offense %notin% c("TOTAL", "Violent crime4", "Property crime4"))
+
+plot_dat2 <- plot_dat %>% 
+  select(offense, offenders) %>% 
+#  mutate(id = 1:n()) %>% 
+  gather(-offense, key = "id", value = "offenders") %>%
+  mutate(unique = case_when(
+    offense %in% viol_crime ~ 0,
+    offense %in% prop_crime ~ 0.5,
+    TRUE ~ 0.7
+  )) %>% 
+  select(-id) %>% 
+  left_join(plot_dat %>% select(offense, perc_black), by = "offense") %>% 
+  rbind(data.frame(offense = "Non-Offenders", 
+                   offenders = 42975960, 
+                   unique = 1, 
+                   perc_black = 1 - sum(plot_dat$perc_black))) %>%
+    filter(offense %notin% c("TOTAL", "Violent crime4", "Property crime4")) 
+
+  hctreemap2(data = plot_dat2,
+    group_vars = "offense",
+    size_var = "offenders", 
+    color_var = "unique",
+    annotations = "perc_black",
+    layoutAlgorithm = "squarified",
+    levelIsConstant = FALSE,
+    levels = list(
+      list(level = 1, dataLabels = list(enabled = TRUE)),
+      list(level = 2, dataLabels = list(enabled = T)),
+      list(level = 3, dataLabels = list(enabled = FALSE))
+    )
+  ) %>% 
+  highcharter::hc_legend(enabled = F) %>%
+  hc_colorAxis(minColor = "red",
+               maxColor = "lightgrey") %>% 
+#  hc_colors(c("#111FDB", "#0FD63E", "#ED34DE", "#575757")) %>% 
+#  hc_add_series(data = ds, type = "treemap") %>%
+  hc_tooltip(pointFormat = "<b>{point.name}</b>:<br>
+             Individuals: {point.value:,.0f}") %>%   
+  hc_add_theme(hc_theme_smpl()) #%>%
+#  hc_tooltip(formatter = JS("function(){
+#                            return ('Individuals: ' + this.perc_black)
+#                            }")
+#  )
+  
+  
+
+```
+
+# White People
+**Total White Population in USA is 248.485.057 (2016)**
+
+```{r, echo=FALSE}
+crimestats_white <- crimestats %>% 
+  mutate(offenders = White) %>% 
+  mutate(offense = `Offense charged`) %>% 
+  mutate(totalwhite = 248485057) %>% 
+  mutate(perc_white = offenders / totalwhite) %>% 
+  mutate(nonoffenders = 248485057 - offenders) %>% 
+  select(offense, offenders, totalwhite, perc_white, nonoffenders)
+
+```
+
+
+
+```{r, echo=FALSE}
+`%notin%` <- Negate(`%in%`)
+
+viol_crime <- c("Murder and nonnegligent manslaughter", "Rape3", "Robbery", "Aggravated assault")
+
+prop_crime <- c("Burglary", "Larceny-theft", "Motor vehicle theft", 
+"Arson")
+
+plot_dat <- crimestats_white %>% 
+  filter(offense %notin% c("TOTAL", "Violent crime4", "Property crime4"))
+
+plot_dat2 <- plot_dat %>% 
+  select(offense, offenders) %>% 
+#  mutate(id = 1:n()) %>% 
+  gather(-offense, key = "id", value = "offenders") %>%
+  mutate(unique = case_when(
+    offense %in% viol_crime ~ 0,
+    offense %in% prop_crime ~ 0.5,
+    TRUE ~ 0.7
+  )) %>% 
+  select(-id) %>% 
+  left_join(plot_dat %>% select(offense, perc_white), by = "offense") %>% 
+  rbind(data.frame(offense = "Non-Offenders", 
+                   offenders = 248485057, 
+                   unique = 1, 
+                   perc_white = 1 - sum(plot_dat$perc_white))) %>%
+    filter(offense %notin% c("TOTAL", "Violent crime4", "Property crime4")) 
+
+  hctreemap2(data = plot_dat2,
+    group_vars = "offense",
+    size_var = "offenders", 
+    color_var = "unique",
+    annotations = "perc_white",
+    layoutAlgorithm = "squarified",
+    levelIsConstant = FALSE,
+    levels = list(
+      list(level = 1, dataLabels = list(enabled = TRUE)),
+      list(level = 2, dataLabels = list(enabled = T)),
+      list(level = 3, dataLabels = list(enabled = FALSE))
+    )
+  ) %>% 
+  highcharter::hc_legend(enabled = F) %>%
+  hc_colorAxis(minColor = "red",
+               maxColor = "lightgrey") %>% 
+#  hc_colors(c("#111FDB", "#0FD63E", "#ED34DE", "#575757")) %>% 
+#  hc_add_series(data = ds, type = "treemap") %>%
+  hc_tooltip(pointFormat = "<b>{point.name}</b>:<br>
+             Individuals: {point.value:,.0f}") %>%   
+  hc_add_theme(hc_theme_smpl()) #%>%
+#  hc_tooltip(formatter = JS("function(){
+#                            return ('Individuals: ' + this.perc_white)
+#                            }")
+#  )
+  
+  
+
+```
+
+
+Assuming each arrest is one unique person (highly unlikely, some individuals get arrested more often) $2.36\%$ (*5.858.330* individuals) of the white population were arrested for some offense. If we only take violent crime into account $0.09\%$ (*241.063* individuals) of the white population were arrested for violent offenses. 
+
+[^1]: FBI Definition of violent crime: "Violent crimes are offenses of murder and nonnegligent manslaughter, rape, robbery, and aggravated assault."

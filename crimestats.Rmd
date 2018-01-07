@@ -1,0 +1,182 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+pacman::p_load(tidyverse, haven, magrittr, highcharter)
+```
+
+```{r}
+crimestats <- readxl::read_excel("table-21a.xls")
+
+options(scipen = 999)
+```
+
+
+```{r}
+crimestats %<>% 
+  mutate(offenders = `Black or
+African
+American`) %>% 
+  mutate(offense = `Offense charged`) %>% 
+  mutate(totalblack = 43320651) %>% 
+  mutate(perc_black = offenders / totalblack) %>% 
+  mutate(nonoffenders = 43320651 - offenders) %>% 
+  select(offense, offenders, totalblack, perc_black, nonoffenders)
+crimestats$`Offense charged`
+
+
+#install.packages("waffle")
+#
+#
+#crimestats %>% 
+#  filter(offense == "TOTAL") %>% 
+#  select(totalblack, nonoffenders) %>% 
+#waffle::waffle()
+```
+
+# highcharter stuff
+
+```{r}
+mpgman3 <- mpg %>% 
+  group_by(manufacturer) %>% 
+  summarise(n = n(), unique = length(unique(model))) %>% 
+  arrange(-n, -unique) %>% 
+  glimpse()
+## Observations: 15
+## Variables: 3
+## $ manufacturer <chr> "dodge", "toyota", "volkswagen", "ford", "chevrol...
+## $ n            <int> 37, 34, 27, 25, 19, 18, 14, 14, 13, 9, 8, 5, 4, 4, 3
+## $ unique       <int> 4, 6, 4, 4, 4, 3, 2, 2, 3, 1, 1, 1, 1, 1, 1
+mpgman3
+hchart(mpgman3, "treemap", hcaes(x = manufacturer, value = n, color = unique))
+
+
+`%notin%` <- Negate(`%in%`)
+crimestats %>% 
+  filter(offense %notin% c("TOTAL", "Violent crime4", "Property crime4")) %>% 
+  select(offense, offenders) %>% 
+#  mutate(id = 1:n()) %>% 
+  gather(-offense, key = "id", value = "offenders") %>%
+  mutate(unique = 0) %>% 
+  select(-id) %>% 
+  rbind(data.frame(offense = "nonoffenders", offenders = 43320651, unique = 0.1)) %>% 
+hchart("treemap", hcaes(x = offense, value = offenders, color = unique)) %>% hc_add_theme(hc_theme_smpl())
+
+hctreemap2()
+
+plot_dat <- crimestats %>% 
+  filter(offense %notin% c("TOTAL", "Violent crime4", "Property crime4"))
+
+plot_dat2 <- plot_dat %>% 
+  select(offense, offenders) %>% 
+#  mutate(id = 1:n()) %>% 
+  gather(-offense, key = "id", value = "offenders") %>%
+  mutate(unique = 0) %>% 
+  select(-id) %>% 
+  left_join(plot_dat %>% select(offense, perc_black), by = "offense") %>% 
+  rbind(data.frame(offense = "Non-Offenders", 
+                   offenders = 43320651, 
+                   unique = 0.1, 
+                   perc_black = 1 - sum(plot_dat$perc_black))) %>%
+    filter(offense %notin% c("TOTAL", "Violent crime4", "Property crime4")) 
+
+  hctreemap2(data = plot_dat2,
+    group_vars = "offense",
+    size_var = "offenders", 
+    color_var = "unique",
+    annotations = "perc_black",
+    layoutAlgorithm = "squarified",
+    levelIsConstant = FALSE,
+    levels = list(
+      list(level = 1, dataLabels = list(enabled = TRUE)),
+      list(level = 2, dataLabels = list(enabled = T)),
+      list(level = 3, dataLabels = list(enabled = FALSE))
+    )
+  ) %>% 
+  highcharter::hc_legend(enabled = F) %>%
+  hc_colorAxis(minColor = RColorBrewer::brewer.pal(7, "Blues")[7],
+               maxColor = RColorBrewer::brewer.pal(7, "Blues")[5]) %>% 
+  hc_add_series(data = ds, type = "treemap") %>%
+  hc_tooltip(pointFormat = "<b>{point.name}</b>:<br>
+             Individuals: {point.value:,.0f}") #%>%
+#  hc_tooltip(formatter = JS("function(){
+#                            return ('Individuals: ' + this.perc_black)
+#                            }")
+#  )
+  
+
+  
+  
+highcharter::list_parse(plot_dat2)  %>% 
+hchart("treemap", hcaes(x = offense, value = offenders, color = unique)) %>% hc_add_theme(hc_theme_smpl())
+
+
+```
+
+
+```{r}
+library(viridisLite)
+library(dplyr)
+
+colorvar <- mtcars$hp
+cols <- viridis(1000)[round(ecdf(colorvar)(colorvar)*1000)]
+cols <- substr(cols, 0, 7)
+
+dt <- mtcars %>% 
+  mutate(x = wt, y = mpg, z = drat, color =  cols)
+
+ds <- highcharter::list_parse(dt)
+
+hc2 <- highchart() %>% 
+  hc_title(text = "Scatter chart with size and color") %>% 
+  hc_add_series(data = ds, type = "bubble") %>%
+  hc_tooltip(formatter = JS("function(){
+                            return ('y: ' + this.y + ' <br> Number of gears: ' + this.point.gear)
+                            }")
+  )
+
+hc2
+```
+
+
+```{r}
+library(treemap)
+library(viridisLite)
+
+data(GNI2014)
+
+tm <- treemap(plot_dat2, index = c("offense"),
+              vSize = "offenders", vColor = "unique",
+              type = "value", palette = viridis(6))
+
+
+ds <- highcharter::list_parse(plot_dat2)
+
+highchart() %>% 
+  hc_title(text = "Scatter chart with size and color") %>% 
+  hc_add_series(data = ds, type = "tree", x = offense, value = offenders, color = unique) %>%
+#hchart(hcaes()) %>% 
+  hc_tooltip(formatter = JS("function(){
+                            return ('y: ' + this.y + ' <br> Number of gears: ' + this.point.gear)
+                            }"))
+
+highchart() %>% 
+  hc_title(text = "Scatter chart with size and color") %>% 
+  hc_add_series(data = ds, type = "bubble") %>%
+  hc_tooltip(formatter = JS("function(){
+                            return ('y: ' + this.y + ' <br> Number of gears: ' + this.point.gear)
+                            }")
+  )
+
+hctreemap(tm)
+```
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
