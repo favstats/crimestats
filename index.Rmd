@@ -40,6 +40,11 @@ American`) %>%
 
 Assuming each arrest is one unique person (highly unlikely, some individuals get arrested more often) $5.27\%$ (*2.263.112* individuals) of the black population were arrested for some offense. If we only take violent crime[^1] into account $0.35\%$ (*153.341* individuals) of the black population were arrested for violent offenses.
 
+```{r}
+
+```
+
+
 
 ```{r, echo=FALSE}
 `%notin%` <- Negate(`%in%`)
@@ -98,6 +103,30 @@ plot_dat2 <- plot_dat %>%
   
 
 ```
+
+```{r, echo=FALSE}
+plot_dat3 <- plot_dat2 %>% 
+  mutate(name = offense) %>% 
+  mutate(value = offenders) %>% 
+  mutate(y = offenders) %>% 
+  mutate(x = 1:n()) %>% 
+  select(x, y, value, name) %>% 
+  arrange(desc(y))
+  
+  
+ highchart() %>%
+    hc_chart(type = "pyramid") %>% 
+    hc_xAxis(categories = plot_dat2$offense) %>% 
+    hc_add_series(plot_dat3, showInLegend = FALSE) %>%
+  hc_colorAxis(minColor = "lightgrey",
+               maxColor = "red") %>% 
+  highcharter::hc_legend(enabled = F) %>%
+#  hc_colors(c("#111FDB", "#0FD63E", "#ED34DE", "#575757")) %>% 
+#  hc_add_series(data = ds, type = "treemap") %>%
+  hc_tooltip(pointFormat = "Individuals: {point.value:,.0f}") %>%   
+  hc_add_theme(hc_theme_smpl()) #%>%
+```
+
 
 # White People
 **Total White Population in the USA is 248.485.057 (2016)**
@@ -171,6 +200,29 @@ plot_dat2 <- plot_dat %>%
   
   
 
+```
+
+```{r, echo=FALSE}
+plot_dat3 <- plot_dat2 %>% 
+  mutate(name = offense) %>% 
+  mutate(value = offenders) %>% 
+  mutate(y = offenders) %>% 
+  mutate(x = 1:n()) %>% 
+  select(x, y, value, name) %>% 
+  arrange(desc(y))
+  
+  
+ highchart() %>%
+    hc_chart(type = "pyramid") %>% 
+    hc_xAxis(categories = plot_dat2$offense) %>% 
+    hc_add_series(plot_dat3, showInLegend = FALSE) %>%
+  hc_colorAxis(minColor = "lightgrey",
+               maxColor = "red") %>% 
+  highcharter::hc_legend(enabled = F) %>%
+#  hc_colors(c("#111FDB", "#0FD63E", "#ED34DE", "#575757")) %>% 
+#  hc_add_series(data = ds, type = "treemap") %>%
+  hc_tooltip(pointFormat = "Individuals: {point.value:,.0f}") %>%   
+  hc_add_theme(hc_theme_smpl()) #%>%
 ```
 
 

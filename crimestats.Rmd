@@ -63,7 +63,7 @@ crimestats %>%
   mutate(unique = 0) %>% 
   select(-id) %>% 
   rbind(data.frame(offense = "nonoffenders", offenders = 43320651, unique = 0.1)) %>% 
-hchart("treemap", hcaes(x = offense, value = offenders, color = unique)) %>% hc_add_theme(hc_theme_smpl())
+hchart(type = "pyramid", hcaes(x = offense, value = offenders, color = unique)) %>% hc_add_theme(hc_theme_smpl())
 
 hctreemap2()
 
@@ -112,6 +112,20 @@ plot_dat2 <- plot_dat %>%
   
 highcharter::list_parse(plot_dat2)  %>% 
 hchart("treemap", hcaes(x = offense, value = offenders, color = unique)) %>% hc_add_theme(hc_theme_smpl())
+
+plot_dat3 <- plot_dat2 %>% 
+  mutate(name = offense) %>% 
+  mutate(value = offenders) %>% 
+  mutate(y = offenders) %>% 
+  mutate(x = 1:n()) %>% 
+  select(x, y, value, name) %>% 
+  arrange(desc(y))
+  
+  
+ highchart() %>%
+    hc_chart(type = "pyramid") %>% 
+    hc_xAxis(categories = plot_dat2$offense) %>% 
+    hc_add_series(plot_dat3, name = "Fruit Consumption", showInLegend = FALSE) 
 
 
 ```
