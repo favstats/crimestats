@@ -23,7 +23,7 @@ options(scipen = 999)
 
 # Black People
 
-**Total Black Population in the USA is 429.759.60 (2016)**
+**Total Black Population in the USA is 42.975.960 (2016)**
 
 ```{r, echo=FALSE, warning=F,message=FALSE}
 crimestats_black <- crimestats %>% 
